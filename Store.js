@@ -179,6 +179,114 @@ function restored(entry) {
   return row
 }
 
+// The live set as rows for findLiveKey. The caller owns the "sender still has
+// actions" question (only the shell holds the sender objects); this shapes the
+// key map and asks the predicate, so the row shape stays testable in isolation.
+function liveEntries(liveKeys, isLive) {
+  var map = liveKeys || {}
+  var test = typeof isLive === "function" ? isLive : function() { return false }
+  var out = []
+  for (var key in map) {
+    var slot = map[key]
+    out.push({
+      key: String(key),
+      originalId: slot ? slot.originalId : 0,
+      live: !!test(key)
+    })
+  }
+  return out
+}
+
+// The daemon notification id as a number, or -1 for anything that is not
+// one. A positive integer in its canonical spelling: no sign, no leading
+// zeros, no fraction. The id is a name here, not a number to reinterpret,
+// and 32 bits is the width the notification protocol gives it.
+function protocolId(id) {
+  var text = String(id === undefined || id === null ? "" : id)
+  if (!/^[1-9][0-9]{0,9}$/.test(text)) return -1
+  var wanted = Number(text)
+  if (wanted > 4294967295) return -1
+  return wanted
+}
+
+// Which still-live notification a daemon-assigned id names. A surface outside
+// the shell (a notification panel's own archive) can only remember the id the
+// daemon assigned at arrival; the live maps here are keyed by our own slot key
+// instead, so an id is resolved by scanning the live set for it. `live` is the
+// caller's answer to "does a sender object with actions still exist behind this
+// key": a row restored from disk has no sender left to invoke, so an id that
+// only matches a dead row is no match at all.
+function findLiveKey(entries, id) {
+  var wanted = protocolId(id)
+  if (wanted < 0) return ""
+  var list = entries || []
+  for (var i = 0; i < list.length; i++) {
+    var entry = list[i]
+    if (!entry || !entry.live) continue
+    if (Number(entry.originalId) === wanted) return String(entry.key || "")
+  }
+  return ""
+}
+
+// The retained set shaped for selection and pruning. The caller owns the
+// sender objects; this reads only the identity and age off the map (keyed by
+// slot key, value {ref, id, ts}) so the shaped rows stay comparable with
+// liveEntries' rows.
+function retainedEntries(map) {
+  var out = []
+  var slots = map || {}
+  for (var key in slots) {
+    var slot = slots[key]
+    if (!slot) continue
+    out.push({ key: String(key), originalId: Number(slot.id) || 0, ts: Number(slot.ts) || 0 })
+  }
+  return out
+}
+
+// Which retained notification a daemon id names. Same id rules as
+// findLiveKey; there is no live predicate here because holding the sender
+// object is exactly what an entry in the retained map means.
+function findRetainedKey(entries, id) {
+  var wanted = protocolId(id)
+  if (wanted < 0) return ""
+  var list = entries || []
+  for (var i = 0; i < list.length; i++) {
+    var entry = list[i]
+    if (!entry) continue
+    if (Number(entry.originalId) === wanted) return String(entry.key || "")
+  }
+  return ""
+}
+
+// Which retained slots the policy lets go, oldest first: past the history
+// window, then whatever the cap pushes out. Zero hours means retention is
+// off, the same way it disables history: everything goes. The caller releases
+// the sender objects; this only decides which keys.
+function pruneRetained(entries, now, hours, cap) {
+  var list = (entries || []).slice()
+  list.sort(function(a, b) {
+    var d = (Number(a.ts) || 0) - (Number(b.ts) || 0)
+    if (d !== 0) return d
+    var ak = String(a.key || ""), bk = String(b.key || "")
+    return ak < bk ? -1 : ak > bk ? 1 : 0
+  })
+  var window = Number(hours)
+  if (!isFinite(window) || window <= 0)
+    return list.map(function(entry) { return String(entry.key || "") })
+  var max = Number(cap)
+  if (!isFinite(max) || max < 0) max = 100
+  var cutoff = Number(now) - window * 3600
+  var drop = []
+  var keep = []
+  for (var i = 0; i < list.length; i++) {
+    if ((Number(list[i].ts) || 0) < cutoff) drop.push(String(list[i].key || ""))
+    else keep.push(list[i])
+  }
+  for (var j = 0; j < keep.length - Math.floor(max); j++)
+    drop.push(String(keep[j].key || ""))
+  return drop
+}
+
 function parseList(text) {
   try {
     if (String(text || "").length > 100 * Security.MAX_HISTORY_ENTRY_BYTES) return []

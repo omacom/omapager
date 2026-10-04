@@ -178,7 +178,7 @@ below apply to new configurations, not choices you have already saved.
 | `fetchRemoteIcons` | `true` | Fetch missing website icons. Turning it off keeps local and validated cached icons. Requires Pillow. Config-only. |
 | `requireSandbox` | `false` | Require Bubblewrap instead of allowing helpers to run directly when it is unavailable. Config-only. |
 | `allowDefaultActionOnCardClick` | `false` | Allow the app's default action on a card click. Explicit action buttons remain available when off. |
-| `historyHours` | `24` | Keep disk history for `1`, `24` or `168` hours, with a 100-entry cap. `0` disables it. |
+| `historyHours` | `24` | Keep disk history and retained actions for `1`, `24` or `168` hours, with a 100-entry cap. `0` disables both. |
 | `clipboardTimeout` | `60` | Clear copied codes after `30`, `60` or `90` seconds, unless the clipboard has changed. |
 
 Add options to the existing widget entry. This example is not a complete
@@ -302,6 +302,9 @@ omarchy-shell omapager dnd              toggle Do Not Disturb
 omarchy-shell omapager expand           open the deck, as hovering would
 omarchy-shell omapager offer code       take the front card's offer (code|link|phone)
 omarchy-shell omapager act reply        invoke one of the sender's actions
+omarchy-shell omapager invoke 12 default  invoke one action on a live or retained notification, by daemon id and action identifier
+omarchy-shell omapager invoke 12 ""       the same call with the default action (the argument cannot be omitted; "" selects the default)
+omarchy-shell notifications dismissId 12  dismiss a live card by daemon id (live cards only; no summary in argv)
 omarchy-shell omapager reply "text"     answer the front card ("" opens the field)
 omarchy-shell omapager snooze 60        quieten the front card's source, in minutes
 omarchy-shell omapager snoozeAll 60     quieten everything for 60 minutes, or wake it
