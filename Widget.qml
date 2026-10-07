@@ -207,7 +207,12 @@ BarWidget {
     var codes = setting("codesBypassQuiet", null)
     if (codes !== null) service.setCodesBypassQuiet(codes !== false)
     service.smartRaise = setting("smartRaise", true) !== false
-    service.wakeHour = Number(setting("wakeHour", 8)) || 8
+    // Midnight (0) is an hour, not a missing one: fall back to 8 only when the
+    // setting is not an hour from 0 to 23.
+    var wake = setting("wakeHour", 8)
+    var wakeHour = Number(wake)
+    service.wakeHour = wake !== "" && wake !== null && isFinite(wakeHour) && wakeHour >= 0 && wakeHour <= 23
+      ? Math.floor(wakeHour) : 8
     service.sourceLimit = Number(setting("sourceLimit", 8)) || 8
     service.heldPerSource = Number(setting("heldPerSource", 10)) || 10
     // Empty means "none chosen", not "no snoozing" - fall back rather than

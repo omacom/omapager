@@ -167,7 +167,7 @@ below apply to new configurations, not choices you have already saved.
 | `actionsAlign` | `right` | Align action buttons to the `right` or `left`. |
 | `hideSettingsAction` | `true` | Hide the browser's repeated Settings action. |
 | `snoozeDurations` | `30, 60, 240, tomorrow` | Offer `15`, `30`, `60`, `120`, `240` or `480` minutes, or `tomorrow`. An empty selection uses the defaults. |
-| `wakeHour` | `8` | Wake hour for `tomorrow`, from 0 to 23. Currently `0` falls back to `8`. |
+| `wakeHour` | `8` | Wake hour for `tomorrow`, from 0 to 23. Anything else falls back to `8`. |
 | `smartRaise` | `true` | Match notification websites against browser window titles when focusing a window. |
 | `alwaysShow` | `false` | Keep the bar indicator visible when nothing is held back. |
 | `codesBypassQuiet` | `true` | Let verification codes through snooze and Do Not Disturb. |
