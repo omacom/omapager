@@ -227,8 +227,23 @@ BarWidget {
   // Derived settings bindings may still hold the previous entry in the
   // settingsChanged handler. Apply after they settle, including config reloads.
   onSettingsChanged: Qt.callLater(applySettings)
-  onServiceChanged: Qt.callLater(applySettings)
-  Component.onCompleted: Qt.callLater(applySettings)
+  onServiceChanged: { Qt.callLater(applySettings); claimPanelIpc() }
+  Component.onCompleted: { Qt.callLater(applySettings); claimPanelIpc() }
+
+  // One indicator per monitor, rebuilt new-before-old on every bar layout
+  // change: only the service's panelOwner registers `omapager.panel`, and it
+  // unregisters before handing over, so no handler is ever refused.
+  property var ipcService: null
+  property bool ipcLeaving: false
+  function claimPanelIpc() {
+    if (service && !ipcLeaving && !service.panelOwner) service.panelOwner = pager
+    if (service) ipcService = service
+  }
+  Connections { target: pager.service; function onPanelOwnerChanged() { pager.claimPanelIpc() } }
+  Component.onDestruction: {
+    ipcLeaving = true
+    if (ipcService && ipcService.panelOwner === pager) ipcService.panelOwner = null
+  }
 
   // ------------------------------------------------------------- looks
   readonly property color panelFg: bar ? bar.foreground : Color.foreground
@@ -401,6 +416,7 @@ BarWidget {
   // rather than `void` because this Qt's QML grammar rejects `void` outright.
   IpcHandler {
     target: "omapager.panel"
+    enabled: !pager.ipcLeaving && !!pager.service && pager.service.panelOwner === pager
     function open(): string { pager.open(); return "open" }
     function openSettings(): string { pager.openSettings(); return "settings" }
     // Current notification status for scripts, without opening the panel.

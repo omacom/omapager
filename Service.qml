@@ -1894,6 +1894,9 @@ Item {
     }
   }
 
+  // The one indicator that registers `omapager.panel` (Widget.qml).
+  property var panelOwner: null
+
   // ------------------------------------------------------------- store
   Process {
     id: storeProc
