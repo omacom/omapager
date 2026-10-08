@@ -811,4 +811,23 @@ for (const u of ['https://example.com/', 'https://sub.example.co.uk/', 'https://
   assert.equal(slack.execArgv, '');
 }
 
+// Without a bar entry there is no saved policy, so the service is ready on its
+// own; with one it keeps waiting for the widget, so a saved requireSandbox is
+// never skipped.
+{
+  const ready = extract(source, 'function readyWithoutWidget()', '\n  onShellChanged:');
+  const readyFor = (shell) => {
+    const s = { helperSettingsReady: false, shell, Array };
+    vm.createContext(s); vm.runInContext(ready + '\nreadyWithoutWidget()', s);
+    return s.helperSettingsReady;
+  };
+  assert.equal(readyFor(null), false, 'no shell yet: wait');
+  assert.equal(readyFor({ barConfig: null }), false, 'no bar config yet: wait');
+  assert.equal(readyFor({ barConfig: { layout: { right: [{ id: 'omarchy.clock' }] } } }), true, 'no entry: ready');
+  assert.equal(readyFor({ barConfig: { layout: {} } }), true, 'empty layout: ready');
+  assert.equal(readyFor({ barConfig: { layout: { center: [{ id: 'njpatel.omapager', requireSandbox: true }] } } }), false,
+    'an entry: wait for the widget');
+  assert.equal(readyFor({ barConfig: { layout: { left: ['njpatel.omapager'] } } }), false, 'a bare-id entry: wait');
+}
+
 console.log('security JS: passed');

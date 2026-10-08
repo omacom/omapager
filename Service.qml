@@ -37,6 +37,27 @@ Item {
   property bool fetchIcons: true
   property bool requireSandbox: false
   property bool helperSettingsReady: false
+  // The bar widget's shell.json entry is the only place settings are saved,
+  // and the widget hands them over (applySettings). With no entry in the bar
+  // there is no saved policy to wait for: the defaults are the policy, so the
+  // service is ready on its own instead of never.
+  function readyWithoutWidget() {
+    if (helperSettingsReady || !shell || !shell.barConfig) return
+    var layout = shell.barConfig.layout || {}
+    for (var section in layout) {
+      var entries = Array.isArray(layout[section]) ? layout[section] : []
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i]
+        if (String(entry && typeof entry === "object" ? entry.id : entry) === "njpatel.omapager") return
+      }
+    }
+    helperSettingsReady = true
+  }
+  onShellChanged: readyWithoutWidget()
+  Connections {
+    target: service.shell
+    function onBarConfigChanged() { service.readyWithoutWidget() }
+  }
   readonly property var helperEnvironment: ({
     OMAPAGER_REQUIRE_SANDBOX: !helperSettingsReady || requireSandbox ? "1" : "0"
   })
