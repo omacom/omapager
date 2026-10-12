@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 
 import qs.Ui
 
@@ -59,12 +60,12 @@ Item {
   signal silenceRequested()
 
   readonly property bool critical: row.urgency === 2
-  readonly property color dimColor: Qt.darker(Color.notifications.text, 1.4)
-  readonly property color bodyColor: Qt.darker(Color.notifications.text, 1.15)
-  readonly property color accentColor: critical ? Color.urgent
-                                               : (row.urgency === 0 ? dimColor : Color.notifications.countdown)
+  readonly property color dimColor: Qt.darker(Commons.Color.notifications.text, 1.4)
+  readonly property color bodyColor: Qt.darker(Commons.Color.notifications.text, 1.15)
+  readonly property color accentColor: critical ? Commons.Color.urgent
+                                               : (row.urgency === 0 ? dimColor : Commons.Color.notifications.countdown)
   readonly property var cardBorderSpec: Border.surfaceSpec(
-      "notifications", "border", Color.notifications.border,
+      "notifications", "border", Commons.Color.notifications.border,
       Math.max(1, Style.space(2)))
   readonly property bool hasBody: String(row.body || "").length > 0
   readonly property real contentPaddingY: hasBody ? Style.space(10) : Style.space(7)
@@ -338,7 +339,7 @@ Item {
     width: body.width
     height: body.height
     radius: Style.cornerRadius
-    color: Color.notifications.background
+    color: Commons.Color.notifications.background
     borderSpec: card.cardBorderSpec
   }
 
@@ -408,9 +409,9 @@ Item {
           anchors.fill: parent
           radius: Style.cornerRadius
           visible: picture.status !== Image.Ready
-          color: Style.normalFillFor(Color.notifications.text, card.accentColor, Color.urgent)
-          borderSpec: Border.controlSpec("normal", Color.notifications.text,
-                                         card.accentColor, Color.urgent)
+          color: Style.normalFillFor(Commons.Color.notifications.text, card.accentColor, Commons.Color.urgent)
+          borderSpec: Border.controlSpec("normal", Commons.Color.notifications.text,
+                                         card.accentColor, Commons.Color.urgent)
 
           Text {
             textFormat: Text.PlainText
@@ -428,7 +429,7 @@ Item {
         Rectangle {
           anchors.fill: parent
           visible: thumb.mono && picture.status === Image.Ready
-          color: Color.notifications.text
+          color: Commons.Color.notifications.text
           opacity: 0.85
           layer.enabled: visible
           layer.effect: MultiEffect { maskEnabled: true; maskSource: picture }
@@ -483,7 +484,7 @@ Item {
                    - (titleMarks.visible ? titleMarks.width + Style.space(7) : 0)
                    - Style.space(8))
             text: String(card.row.summary || "")
-            color: card.critical ? Color.urgent : Color.notifications.text
+            color: card.critical ? Commons.Color.urgent : Commons.Color.notifications.text
             font.family: "Liberation Sans"
             font.pixelSize: Style.font.title * card.fontScale
             font.bold: true
@@ -513,7 +514,7 @@ Item {
                 textFormat: Text.PlainText
                 required property var modelData
                 text: modelData
-                color: Color.notifications.text
+                color: Commons.Color.notifications.text
                 opacity: 0.9
                 font.family: Style.font.family
                 font.pixelSize: Style.font.body * card.fontScale
@@ -530,14 +531,14 @@ Item {
             anchors.verticalCenter: title.verticalCenter
             visible: card.stands > 1
             readonly property var badgeBorderSpec: Border.controlSpec(
-                "normal", Color.notifications.text, card.accentColor, Color.urgent)
+                "normal", Commons.Color.notifications.text, card.accentColor, Commons.Color.urgent)
             width: badgeText.implicitWidth + Style.spacing.sm * 2
                    + Border.left(badgeBorderSpec) + Border.right(badgeBorderSpec)
             height: badgeText.implicitHeight + Style.spacing.xxs * 2
                     + Border.top(badgeBorderSpec) + Border.bottom(badgeBorderSpec)
             radius: Style.cornerRadius
-            color: Style.normalFillFor(Color.notifications.text, card.accentColor,
-                                       Color.urgent)
+            color: Style.normalFillFor(Commons.Color.notifications.text, card.accentColor,
+                                       Commons.Color.urgent)
             borderSpec: badgeBorderSpec
 
             Text {
@@ -589,7 +590,7 @@ Item {
                 horizontalPadding: Style.space(4)
                 verticalPadding: Style.space(2)
                 implicitWidth: implicitHeight
-                foreground: Color.notifications.text
+                foreground: Commons.Color.notifications.text
                 fontFamily: Style.font.family
                 fontSize: Style.font.caption * card.fontScale
                 // The deck owns pointer hover; mirror its coordinates into the
@@ -663,7 +664,7 @@ Item {
             visible: !bodyBox.overflow
             textFormat: Text.RichText
             text: Markup.colourLinks(String(card.row.bodyRich || card.row.body || ""),
-                                     String(Color.notifications.countdown))
+                                     String(Commons.Color.notifications.countdown))
             color: card.bodyColor
             font.family: "Liberation Sans"
             font.pixelSize: Style.font.title * card.fontScale
@@ -780,7 +781,7 @@ Item {
               id: replyInput
               anchors.fill: parent
               anchors.topMargin: Style.space(3)
-              foreground: Color.notifications.text
+              foreground: Commons.Color.notifications.text
               font.family: Style.font.family
               font.pixelSize: Style.font.body * card.fontScale
               leftPadding: horizontalPadding + Border.left(_borderSpec)
@@ -807,7 +808,7 @@ Item {
                 visible: replyInput.text.length > 0
                 text: "Send"
                 bordered: false
-                foreground: Color.notifications.text
+                foreground: Commons.Color.notifications.text
                 fontFamily: Style.font.family
                 fontSize: Style.font.body * card.fontScale
                 onClicked: { card.replySent(replyInput.text); replyInput.text = "" }

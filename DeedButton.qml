@@ -8,6 +8,7 @@
 
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Button {
@@ -43,7 +44,7 @@ Button {
 
   bordered: true
   hasCursor: hot                      // paints the theme's hover state
-  foreground: Color.notifications.text
+  foreground: Commons.Color.notifications.text
   fontFamily: Style.font.family
   fontSize: Style.font.body * (toast ? toast.fontScale : 1)
 

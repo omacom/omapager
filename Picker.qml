@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // A dropdown that does not move under the pointer.
@@ -24,7 +25,7 @@ Item {
   property string value: ""
   // Plain strings or { value, label } objects, like the kit's Dropdown.
   property var options: []
-  property color foreground: Color.popups.text
+  property color foreground: Commons.Color.popups.text
   property string fontFamily: Style.font.family
   property int rowHeight: Style.spacing.controlHeight
 
@@ -68,9 +69,9 @@ Item {
       radius: Style.cornerRadius
 
       readonly property bool hot: triggerArea.containsMouse || menu.opened
-      color: Style.controlFill(menu.opened, trigger.hot, picker.foreground, Color.accent)
+      color: Style.controlFill(menu.opened, trigger.hot, picker.foreground, Commons.Color.accent)
       borderSpec: Border.controlSpec(menu.opened ? "focus" : trigger.hot ? "hover-cursor" : "normal",
-                                     picker.foreground, Color.accent)
+                                     picker.foreground, Commons.Color.accent)
 
       Text {
         anchors.left: parent.left
@@ -117,9 +118,9 @@ Item {
     // padding, which is the whole point.
 
     background: BorderSurface {
-      color: Color.popups.background
+      color: Commons.Color.popups.background
       radius: Style.cornerRadius
-      borderSpec: Border.controlSpec("normal", picker.foreground, Color.accent)
+      borderSpec: Border.controlSpec("normal", picker.foreground, Commons.Color.accent)
     }
 
     contentItem: Column {
@@ -135,7 +136,7 @@ Item {
           width: menu.availableWidth
           height: Style.spacing.popupRowHeight
           radius: Style.spacing.labelGap
-          color: rowArea.containsMouse ? Style.hoverFillFor(picker.foreground, Color.accent) : "transparent"
+          color: rowArea.containsMouse ? Style.hoverFillFor(picker.foreground, Commons.Color.accent) : "transparent"
 
           Text {
             anchors.left: parent.left
@@ -146,7 +147,7 @@ Item {
             textFormat: Text.PlainText
             text: picker.optionLabel(row.modelData)
             elide: Text.ElideRight
-            color: rowArea.containsMouse ? Style.hoverStateColor(picker.foreground, Color.accent) : picker.foreground
+            color: rowArea.containsMouse ? Style.hoverStateColor(picker.foreground, Commons.Color.accent) : picker.foreground
             font.family: picker.fontFamily
             font.pixelSize: Style.font.body
             font.bold: row.chosen

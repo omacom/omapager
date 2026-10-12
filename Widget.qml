@@ -17,6 +17,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 BarWidget {
@@ -231,14 +232,14 @@ BarWidget {
   Component.onCompleted: Qt.callLater(applySettings)
 
   // ------------------------------------------------------------- looks
-  readonly property color panelFg: bar ? bar.foreground : Color.foreground
+  readonly property color panelFg: bar ? bar.foreground : Commons.Color.foreground
   readonly property color dim: Qt.darker(panelFg, 1.4)
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
   // Native semantic roles keep the two quiet states distinct across themes:
   // urgent for do-not-disturb, accent for a snooze that will end.
-  readonly property color silencedColour: Color.urgent
-  readonly property color snoozedColour: Color.accent
+  readonly property color silencedColour: Commons.Color.urgent
+  readonly property color snoozedColour: Commons.Color.accent
 
   // nf-md-bell-off, the glyph Omarchy's own Dnd indicator uses, so a silenced
   // desktop looks the same whichever service is running; nf-md-bell-sleep, a
@@ -483,7 +484,7 @@ BarWidget {
     Indicator {
       visible: !pager.hasState && !pager.sharingOfferPending
       text: pager.bellOff
-      colour: pager.bar ? pager.bar.barForeground : Color.foreground
+      colour: pager.bar ? pager.bar.barForeground : Commons.Color.foreground
       quiet: true
       tooltipText: "Enable Do Not Disturb. Right-click for notifications."
     }
@@ -898,7 +899,7 @@ BarWidget {
             width: parent.width
             implicitHeight: sharingOfferContent.implicitHeight + Style.space(16)
             color: "transparent"
-            borderSpec: Border.controlSpec("normal", pager.panelFg, Color.accent)
+            borderSpec: Border.controlSpec("normal", pager.panelFg, Commons.Color.accent)
             radius: Style.cornerRadius
 
             Column {
@@ -1083,8 +1084,8 @@ BarWidget {
                 bottomPadding: Style.spacing.md
                 height: recentText.implicitHeight + contentTopInset + contentBottomInset
                 radius: Style.cornerRadius
-                color: Style.normalFillFor(pager.panelFg, Color.accent)
-                borderSpec: Border.controlSpec("normal", pager.panelFg, Color.accent)
+                color: Style.normalFillFor(pager.panelFg, Commons.Color.accent)
+                borderSpec: Border.controlSpec("normal", pager.panelFg, Commons.Color.accent)
 
                 Column {
                   id: recentText
@@ -1448,8 +1449,8 @@ BarWidget {
                 bottomPadding: Style.spacing.md
                 height: historyText.implicitHeight + contentTopInset + contentBottomInset
                 radius: Style.cornerRadius
-                color: Style.normalFillFor(pager.panelFg, Color.accent)
-                borderSpec: Border.controlSpec("normal", pager.panelFg, Color.accent)
+                color: Style.normalFillFor(pager.panelFg, Commons.Color.accent)
+                borderSpec: Border.controlSpec("normal", pager.panelFg, Commons.Color.accent)
 
                 MouseArea {
                   anchors.fill: parent

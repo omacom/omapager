@@ -16,6 +16,7 @@ import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import Quickshell.Services.Pipewire
 import qs.Commons
+import qs.Commons as Commons
 
 import "Store.js" as Store
 import "Security.js" as Security
@@ -79,7 +80,7 @@ Item {
   // notification background rather than a setting: if the card is light, the
   // icon meant for light backgrounds is the one that will read on it.
   readonly property bool lightTheme: {
-    var c = Color.notifications.background
+    var c = Commons.Color.notifications.background
     return (0.299 * c.r + 0.587 * c.g + 0.114 * c.b) > 0.5
   }
 
