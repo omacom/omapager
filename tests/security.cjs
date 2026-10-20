@@ -811,4 +811,47 @@ for (const u of ['https://example.com/', 'https://sub.example.co.uk/', 'https://
   assert.equal(slack.execArgv, '');
 }
 
+{ // A sender with no pid is still raised: Telegram Desktop sends only its
+  // desktop entry, which is its window class. Clicking the card, or "Open in
+  // app", raises it even after the app's own default action was invoked.
+  const telegram = Store.snapshot({ appName: 'Telegram Desktop', summary: 'Ana', body: 'hi',
+    hints: { 'desktop-entry': 'org.telegram.desktop' } }, 'tg', { Normal: 1 });
+  assert.equal(telegram.senderPid, 0);
+  assert.equal(telegram.desktopEntry, 'org.telegram.desktop');
+  for (const hostile of ['a b', 'x"); os.execute("id', '../evil', 'a'.repeat(256)])
+    assert.equal(Store.snapshot({ appName: 'x', summary: 's', body: 'b',
+      hints: { 'desktop-entry': hostile } }, 'h', { Normal: 1 }).desktopEntry, '', hostile);
+
+  const routing = [
+    extract(source, 'function windowForPid(pid)', 'function windowForSource(source)'),
+    extract(source, 'function invokeAction(key, identifier)', '// ------------------------------------------------------- source routing'),
+    extract(source, 'function focusWindow(win)', 'function runExecArgv(argv)'),
+    extract(source, 'function activate(key)', '// ------------------------------------------------------------- replying'),
+  ].join('\n');
+  for (const [entry, how] of [['body', 'activate'], ['button', 'invokeAction']]) {
+    const dispatched = [], invoked = [], closed = [];
+    const r = {
+      Hyprland: { dispatch: x => dispatched.push(x) }, Security: S, Markup: M,
+      allowDefaultActionOnCardClick: true,
+      toasts: { count: 1, get: () => telegram },
+      rowIndexFor: key => key === 'tg' ? 0 : -1,
+      refs: { tg: { actions: [{ identifier: 'default', invoke: () => invoked.push('default') },
+                              { identifier: 'mark-read', invoke: () => invoked.push('mark-read') }] } },
+      openWindows: () => [
+        { wmClass: 'foot', address: '0xf00', pid: 7, focusOrder: 0 },
+        { wmClass: 'org.telegram.desktop', address: '0xbeef', pid: 8072, focusOrder: 3 }],
+      windowForSource: () => null,
+      closeToast: (key, reason) => closed.push(reason),
+    };
+    vm.createContext(r); vm.runInContext(routing, r);
+    if (how === 'activate') r.activate('tg'); else r.invokeAction('tg', 'default');
+    assert.deepEqual(invoked, ['default'], entry);
+    assert.deepEqual(dispatched, ['hl.dsp.focus({window = hl.get_window("address:0xbeef")})'], entry);
+    assert.deepEqual(closed, ['activated'], entry);
+    dispatched.length = 0;
+    r.invokeAction('tg', 'mark-read');
+    assert.equal(dispatched.length, 0, 'a non-default action leaves focus where it is');
+  }
+}
+
 console.log('security JS: passed');

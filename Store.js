@@ -41,6 +41,11 @@ function snapshot(n, key, urgencyEnum) {
   // and its pid says which one.
   var hints = n.hints || {}
   var senderPid = Number(hints["sender-pid"] || 0) || 0
+  // The sender's desktop file id. On Wayland a native app's window class is
+  // that id, so it names the window when no pid came with it: Telegram Desktop
+  // sends "org.telegram.desktop" and no sender-pid.
+  var desktopEntry = String(n.desktopEntry || hints["desktop-entry"] || "")
+  if (!/^[A-Za-z0-9._-]{1,255}$/.test(desktopEntry)) desktopEntry = ""
   var raw = { app: Security.bounded(n.appName, Security.MAX_APP_NAME), summary: Security.bounded(n.summary, Security.MAX_SUMMARY),
               body: Security.bounded(n.body, Security.MAX_BODY) }
   // Who this is really from, and what the body says once the sender's own
@@ -56,6 +61,7 @@ function snapshot(n, key, urgencyEnum) {
     key: key,
     originalId: n.id || 0,
     senderPid: senderPid,
+    desktopEntry: desktopEntry,
     execArgv: parsedExec ? JSON.stringify(parsedExec) : "",
     app: Security.bounded(n.appName, Security.MAX_APP_NAME),
     appIcon: Security.bounded(n.appIcon || named, 256),
@@ -86,7 +92,7 @@ function snapshot(n, key, urgencyEnum) {
 }
 
 // The fields an in-place update (replaces_id) must write through to the row.
-var ROLES = ["originalId", "senderPid", "execArgv", "app", "appIcon", "summary", "body", "rawBody", "bodyRich",
+var ROLES = ["originalId", "senderPid", "desktopEntry", "execArgv", "app", "appIcon", "summary", "body", "rawBody", "bodyRich",
              "bodyLine", "source", "groupKey", "image", "urgency",
              "expireTimeout", "duration", "ts",
              "code", "codes", "link", "meeting", "phone", "replyPath", "replyTo"]
@@ -113,7 +119,7 @@ var RESTORE_GRACE = 20000     // 20s for a notification that outlived its sender
 // without `source`, and every notification for the rest of the session lost
 // it. Everything goes through normalise() so they all have every field.
 var SHAPE = {
-  key: "", originalId: 0, senderPid: 0, execArgv: "", app: "", appIcon: "", summary: "", body: "",
+  key: "", originalId: 0, senderPid: 0, desktopEntry: "", execArgv: "", app: "", appIcon: "", summary: "", body: "",
   bodyRich: "", bodyLine: "", rawBody: "", source: "", groupKey: "", image: "",
   code: "", codes: "", link: "", meeting: false, phone: "", replyPath: "", replyTo: "",
   stored_image: "", urgency: 1, expireTimeout: 0, duration: 0, ts: 0,
