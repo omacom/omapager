@@ -1425,6 +1425,12 @@ Item {
         }
       }
     }
+    // "Open in app" opens the app, which the app cannot do for itself: see
+    // activate(). Other actions (mark read, reply) stay where you are.
+    if (identifier === "default") {
+      var at = rowIndexFor(key)
+      focusWindow(senderWindow(at >= 0 ? toasts.get(at) : null))
+    }
     closeToast(key, "activated")
   }
 
@@ -1531,6 +1537,27 @@ Item {
     for (var i = 0; i < windows.length; i++)
       if (windows[i].pid === want) return windows[i]
     return null
+  }
+
+  // A native Wayland app's class is its app id, which is its desktop file id -
+  // the one name the sender gives that is not free text. Several windows can
+  // share it, so the most recent wins.
+  function windowForEntry(entry) {
+    var want = String(entry || "").toLowerCase()
+    if (!want) return null
+    var windows = openWindows()
+    var found = []
+    for (var i = 0; i < windows.length; i++)
+      if (windows[i].wmClass.toLowerCase() === want) found.push(windows[i])
+    return mostRecent(found)
+  }
+
+  // The sender's own window: its process, then its desktop entry, then
+  // whatever its name or site matches.
+  function senderWindow(row) {
+    if (!row) return null
+    return windowForPid(row.senderPid) || windowForEntry(row.desktopEntry)
+      || windowForSource(row.source)
   }
 
   // Of several windows that all match, the one you were in most recently.
@@ -1640,7 +1667,12 @@ Item {
       }
     }
 
-    if (!handled) {
+    // Invoking the action tells the app, but on Wayland an app may only raise
+    // its own window with an activation token from whoever was clicked, and
+    // this daemon has none to give. Telegram Desktop stays behind on "Open in
+    // app". Raising the sender ourselves is what brings it forward.
+    if (handled) focusWindow(senderWindow(row))
+    else {
       if (row) {
         // Source first, link last. A Slack message quoting a link to
         // somewhere else is still a Slack notification: clicking it should
@@ -1650,7 +1682,7 @@ Item {
         // the wrong place - including a Slack card that would have opened
         // axiom.co.
         // The sender's own window first, then the source's, then the site.
-        var win = windowForPid(row.senderPid) || windowForSource(row.source)
+        var win = senderWindow(row)
         if (win) focusWindow(win)
         // Not `indexOf(".") > 0`. A source is lifted out of text the sender
         // wrote, and "https://" + it is a URL going wherever it says - so it
