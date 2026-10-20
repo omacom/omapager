@@ -111,6 +111,19 @@ the exit animation: departing cards must not consume the next dismissal.
 `omapager clear` must still clear every stack. `node tests/security.cjs` covers
 deck selection, stale open keys, animation overlap and the empty state.
 
+The front card of an open stack of two or more shows Clear all beside its
+close control, and so does the front card of a shut stack under the pointer.
+It calls `clearDeck` with that card's own deck key: that deck or nothing, never
+the open or newest one, so a second click while the stack is leaving does
+nothing. Each card closes as `dismissed`, exactly as its own close control
+would close it. `node tests/security.cjs` compares the history writes and
+sender closes with closing each card individually. In an isolated lab, open a
+stack of three above two other stacks of two, click Clear all, and check only
+that stack goes. Click again without moving the pointer once it settles: the
+stack that slid underneath must clear too, rather than its newest card
+opening, as in the repeated close regression. A stack of one shows only its
+close control.
+
 ## Things that cost a day to learn
 
 **Qt/QML**
@@ -355,7 +368,7 @@ half of the feature set has no input, not a degraded one.
 Run `tests/font-layout.sh` on an Omarchy installation. It renders the actual
 Toast and DeedButton components offscreen without starting a notification
 daemon. Three explicit control-typography profiles (12px monospace, 14px monospace
-and 12px proportional) each run 78 cases; card content retains the stock
+and 12px proportional) each run 126 cases; card content retains the stock
 notification font. Cases include:
 
 - Every 5% font-scale step from 75–200%, with both action alignments.
@@ -366,6 +379,11 @@ notification font. Cases include:
   size and replacing actions while the list is open.
 - A short title that should remain on one line, and a wrapping fixture that
   is extended until its measured text exceeds the available width.
+- The close control in the same top-right position, centred on the title's
+  first line, for short, wrapping and open titles, every age label, an icon,
+  marks, a count and actions, with and without a body, at 100% and 150%.
+- The front card of an open stack, whose Clear all control must sit between
+  the title and the close control with its label whole, and dismiss the stack.
 
 The long-label cases reach the expanded list, not just the More-only row.
 Set `OMARCHY_SHELL_DIR` if the shell is installed somewhere other than

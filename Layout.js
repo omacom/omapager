@@ -46,7 +46,9 @@ function groupRows(rows) {
 
 // Rows are newest-first. Returns:
 //   decks:      [{ key, rows: [row...] }] in display order, newest deck first
-//   placements: { rowKey: { y, height, scale, opacity, z, front, hidden, count } }
+//   placements: { rowKey: { y, height, scale, opacity, z, front, hidden, count, leads } }
+//               leads is how many cards the front card's deck holds, and 0 on
+//               every card behind it: a stack is dismissed from its front.
 //   height:     total height the deck area occupies
 function compute(rows, opts) {
   var stacking = opts.stacking || "all"
@@ -102,7 +104,8 @@ function compute(rows, opts) {
       if (open) {
         placements[item.key] = {
           y: y, scale: 1, opacity: 1, z: 1000 - shown, front: r === 0,
-          hidden: false, height: heightOf(item.key), count: item.count
+          hidden: false, height: heightOf(item.key), count: item.count,
+          leads: r === 0 ? items.length : 0
         }
         y += heightOf(item.key) + gap
         shown += 1
@@ -116,7 +119,8 @@ function compute(rows, opts) {
           z: 1000 - r,
           front: r === 0,
           hidden: !drawn,
-          count: item.count
+          count: item.count,
+          leads: r === 0 ? items.length : 0
         }
       }
     }
@@ -133,7 +137,8 @@ function compute(rows, opts) {
   for (var q = 0; q < rows.length; q++) {
     if (!placements[rows[q].key])
       placements[rows[q].key] = { y: 0, scale: 0.9, opacity: 0, z: 0,
-                                  front: false, hidden: true, height: 0, count: 1 }
+                                  front: false, hidden: true, height: 0, count: 1,
+                                  leads: 0 }
   }
 
   return { decks: decks, placements: placements, height: Math.max(0, y) }

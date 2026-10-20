@@ -1028,7 +1028,8 @@ Item {
     var snap = {}
     for (var key in placements)
       snap[key] = { y: at(key, "y"), scale: at(key, "scale"),
-                    opacity: at(key, "opacity"), height: at(key, "height") }
+                    opacity: at(key, "opacity"), height: at(key, "height"),
+                    leads: placements[key].leads || 0 }
     return snap
   }
 
@@ -1068,9 +1069,11 @@ Item {
     // one in a collapsed deck draws no content - correct while it is a peek of
     // an edge, wrong for one that is fading in place, which blanked itself for
     // a frame and read as a flash.
+    // `leads` is kept for the same reason: the front card of a stack shows the
+    // control that clears it, and dropping that mid-fade re-wrapped its title.
     return { y: prev ? prev.y : 0, scale: prev ? prev.scale : 1, opacity: 0,
              height: prev ? prev.height : 0, z: 2000, front: true,
-             hidden: false, count: 1 }
+             hidden: false, count: 1, leads: prev ? prev.leads || 0 : 0 }
   }
 
   // A row on its way out keeps its place in the model until the move that
@@ -1377,15 +1380,22 @@ Item {
   // one the newest card sits in. The keybinding used to sweep every deck, so a
   // chat thread you were done with took an unrelated build failure with it.
   // In "all" mode there is only one deck, so this is still everything.
-  function clearDeck(reason) {
+  //
+  // A stack's own clear control names its deck. That deck or nothing: falling
+  // back to the newest one would clear a stack nobody pointed at, because the
+  // named one has gone (it is already leaving, or the mode changed under it).
+  function clearDeck(reason, deckKey) {
     var decks = layout.decks
     if (decks.length === 0) return 0
-    var deck = decks[0]
+    var named = deckKey !== undefined
+    var deck = named ? null : decks[0]
+    var wanted = named ? deckKey : (expanded ? openDeck : undefined)
     // Use current decks: the open key can outlive a close or a mode change,
     // and rows still playing their exit animation are no longer dismissible.
-    if (expanded)
+    if (wanted !== undefined)
       for (var i = 0; i < decks.length; i++)
-        if (decks[i].key === openDeck) { deck = decks[i]; break }
+        if (decks[i].key === wanted) { deck = decks[i]; break }
+    if (!deck) return 0
     var keys = deck.rows.map(function(row) { return row.key })
     for (var k = 0; k < keys.length; k++) closeToast(keys[k], reason || "cleared")
     return keys.length
@@ -2494,6 +2504,11 @@ Item {
             onExpired: service.closeToast(model.key, "expired")
             onActivated: service.activate(model.key)
             onDismissed: service.closeToast(model.key, "dismissed")
+            // The same path as SUPER + SHIFT + comma, aimed at this card's own
+            // deck: each card closes as "dismissed", exactly as if its own
+            // close control had been clicked, so history and the sender see
+            // nothing different.
+            onStackDismissed: service.clearDeck("dismissed", Layout.deckKeyFor(model, service.stacking))
             snoozeOptions: service.snoozeOptions
             onSnoozeRequested: function(seconds) {
               service.snoozeSource(String(model.groupKey || ""),

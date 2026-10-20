@@ -262,6 +262,80 @@ function newCapacityScope() {
   const empty = fixture('source', false, '');
   empty.toasts.rows = [];
   assert.equal(empty.clearDeck('dismissed'), 0);
+  // A stack's own clear control names its deck, whichever deck is open.
+  const named = fixture('source', true, 'build');
+  assert.equal(named.clearDeck('dismissed', 'chat'), 2);
+  assert.deepEqual(Object.keys(named.leaving).sort(), ['new', 'old']);
+  // Once that deck is leaving, a second click must not fall back to another.
+  assert.equal(named.clearDeck('dismissed', 'chat'), 0);
+  assert.equal(named.clearDeck('dismissed', 'gone'), 0);
+  assert.deepEqual(Object.keys(named.leaving).sort(), ['new', 'old']);
+  const allNamed = fixture('all', true, '');
+  assert.equal(allNamed.clearDeck('dismissed', Layout.deckKeyFor({ groupKey: 'chat' }, 'all')), 3);
+}
+
+{ // Only the front card of a stack leads it, and it keeps that while it fades.
+  const Layout = load('Layout');
+  const rows = [['new', 'chat'], ['build', 'build'], ['old', 'chat']].map(([key, groupKey]) => ({ key, groupKey }));
+  for (const expanded of [false, true]) {
+    const source = Layout.compute(rows, { stacking: 'source', expanded, openDeck: 'chat' }).placements;
+    assert.equal(source.new.leads, 2);
+    assert.equal(source.old.leads, 0);
+    assert.equal(source.build.leads, 1, 'a lone card leads a stack of one');
+    const all = Layout.compute(rows, { stacking: 'all', expanded }).placements;
+    assert.deepEqual([all.new.leads, all.build.leads, all.old.leads], [3, 0, 0]);
+  }
+  const s = { placements: Layout.compute(rows, { stacking: 'source', expanded: true, openDeck: 'chat' }).placements };
+  s.at = (key, what) => s.placements[key][what];
+  vm.createContext(s);
+  vm.runInContext(extract(source, 'function snapshot()', '// Anything that moves the deck') +
+                  extract(source, 'function restingPlace(key)', '// A row on its way out'), s);
+  s.was = s.snapshot();
+  assert.equal(s.restingPlace('new').leads, 2, 'a leaving front card keeps its stack control');
+  assert.equal(s.restingPlace('old').leads, 0, 'leaving cards behind it do not gain one');
+  assert.equal(s.restingPlace('new').front, true);
+}
+
+{ // Clearing a stack must record history and close senders exactly as clicking
+  // each card's close control would.
+  const Layout = load('Layout');
+  function run(clear) {
+    const s = newCapacityScope();
+    const writes = [];
+    s.Store = { ...s.Store, write: (proc, bin, verb, payload, args) => {
+      if (verb === 'close') writes.push(args);
+    } };
+    Object.assign(s, { Layout, stacking: 'source', expanded: true, openDeck: 'app:chat' });
+    Object.defineProperty(s, 'layout', { get: () => Layout.compute(
+      s.toasts.rows.filter(row => !s.leaving[row.key]),
+      { stacking: s.stacking, expanded: s.expanded, openDeck: s.openDeck }) });
+    const senders = [['Chat', 'one'], ['Build', 'build'], ['Chat', 'two'], ['Chat', 'three']].map(([app, summary], i) => {
+      const n = s.fakeNotification(i + 1, summary);
+      n.appName = app;
+      s.handleNotification(n);
+      return n;
+    });
+    s.drainCallLater();
+    const summaryOf = Object.fromEntries(s.toasts.rows.map(row => [row.key, row.summary]));
+    const chat = s.toasts.rows.filter(row => row.groupKey === 'app:chat').map(row => row.key);
+    assert.equal(chat.length, 3);
+    clear(s, chat);
+    // What sceneSettled does once the exit animation has finished.
+    for (const key of Object.keys(s.leaving)) s.finishClose(key, s.leaving[key]);
+    return {
+      history: writes.map(([key, reason]) => summaryOf[key] + ':' + reason),
+      remaining: s.toasts.rows.map(row => row.summary),
+      senders: senders.map(n => n.summary + ':' + n.dismissals + '/' + n.closeAttempts),
+      live: s.liveCount(),
+    };
+  }
+  const grouped = run(s => assert.equal(s.clearDeck('dismissed', 'app:chat'), 3));
+  const oneByOne = run((s, keys) => keys.forEach(key => s.closeToast(key, 'dismissed')));
+  assert.deepEqual(grouped.history, ['three:dismissed', 'two:dismissed', 'one:dismissed']);
+  assert.deepEqual(grouped.remaining, ['build']);
+  assert.deepEqual(grouped.senders, ['one:1/1', 'build:0/0', 'two:1/1', 'three:1/1']);
+  assert.equal(grouped.live, 1);
+  assert.deepEqual(grouped, oneByOne);
 }
 
 { // A late decode cannot overwrite a replacement, even if it reuses the path.

@@ -25,7 +25,8 @@ the Hyprland portal, Omapager offers to snooze notifications for 30 minutes,
 suggestions in preferences.
 
 **Grouped notifications.** Messages from the same source stack together. Hover
-to expand the group and read or act on each notification.
+to expand the group and read or act on each notification, or click Clear all
+to dismiss the whole group.
 
 <img src="assets/deck.gif" width="410" alt="Slack, WhatsApp and GitHub notifications arriving, grouping and expanding, followed by a Google code notification">
 
