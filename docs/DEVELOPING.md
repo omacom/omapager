@@ -366,6 +366,7 @@ notification font. Cases include:
   size and replacing actions while the list is open.
 - A short title that should remain on one line, and a wrapping fixture that
   is extended until its measured text exceeds the available width.
+- The close control staying a square that holds its whole ✕ in every case.
 
 The long-label cases reach the expanded list, not just the More-only row.
 Set `OMARCHY_SHELL_DIR` if the shell is installed somewhere other than

@@ -584,14 +584,17 @@ Item {
               Button {
                 id: shut
                 anchors.centerIn: parent
-                text: "\u2715"
+                // An icon, not a label: Button shrinks and elides its label
+                // to fit the width, and this width follows the height, so a
+                // label would collapse the square to its padding.
+                iconText: "\u2715"
                 bordered: true
                 horizontalPadding: Style.space(4)
                 verticalPadding: Style.space(2)
                 implicitWidth: implicitHeight
                 foreground: Color.notifications.text
                 fontFamily: Style.font.family
-                fontSize: Style.font.caption * card.fontScale
+                iconSize: Style.font.caption * card.fontScale
                 // The deck owns pointer hover; mirror its coordinates into the
                 // shared control state just as action buttons do.
                 hasCursor: {
