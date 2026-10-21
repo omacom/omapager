@@ -73,6 +73,20 @@ Window {
     }
     return bs
   }
+  // The dismiss control is a square that holds its whole glyph. Its width
+  // follows its height, so a mark the shared Button may shrink and elide
+  // collapses it to its padding.
+  function checkClose() {
+    var mark=nodes(toast).find(n => n.text === "✕" && n.lineCount !== undefined && n.visible)
+    check(!!mark, "no close mark")
+    var shut=mark.parent
+    while (shut && shut.rightClicked === undefined) shut=shut.parent
+    check(!!shut, "close mark outside a button")
+    check(mark.contentWidth > 0 && !mark.truncated && mark.contentWidth <= mark.width+0.5,
+          "close mark collapsed")
+    inside(mark, shut, "close mark outside its button")
+    check(Math.abs(shut.width - shut.height) < 0.5, "close control is not square")
+  }
   function baseRow() { return {summary:"Ready",body:"Synthetic test message"} }
   function configure(c) {
     toast.deedsOpen=false; toast.menuOpen=false; toast.replying=false; toast.takenKind=""
@@ -93,7 +107,7 @@ Window {
   function next() {
     index++
     if (index === cases.length) {
-      console.log("PASS",profile,cases.length,"cases: row/list geometry, activation, replacements and titles")
+      console.log("PASS",profile,cases.length,"cases: row/list geometry, activation, replacements, titles and the close control")
       Qt.quit(); return
     }
     configure(cases[index]); phase="row"
@@ -126,6 +140,7 @@ Window {
       try {
         if (test.phase === "start") { test.next(); return }
         var c=test.cases[test.index], bs=test.checkGeometry()
+        if (toast.visible) test.checkClose()
         var title=test.nodes(toast).find(n=>n.text===toast.row.summary && n.lineCount !== undefined)
         test.check(title && !title.truncated,"title unexpectedly truncated")
         if (c.kind === "visibility") {
